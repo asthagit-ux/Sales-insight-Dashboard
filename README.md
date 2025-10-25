@@ -12,4 +12,3 @@ Data Scale: Analyzes and processes 50K+ transactional records.
 
 Trend Identification: Highlights monthly, quarterly, and year-over-year (YoY) sales and profit changes to derive key business trends.
 
-🛠️ Technolog
