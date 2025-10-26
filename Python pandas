@@ -1,0 +1,73 @@
+2) Python: cleaning & aggregation (pandas)
+
+Save this as clean_sales.py. It reads CSV(s), cleans, and exports cleaned_transactions.csv and pre-aggregated files for Power BI.
+# clean_sales.py
+import pandas as pd
+from pathlib import Path
+
+
+INPUT = 'raw_transactions.csv' # or folder
+OUT_CLEAN = 'cleaned_transactions.csv'
+OUT_AGG_MONTH_REGION = 'agg_month_region.csv'
+
+
+def clean(df: pd.DataFrame) -> pd.DataFrame:
+# Standardize column names
+df = df.rename(columns=lambda x: x.strip().lower())
+
+
+# Ensure data types
+df['transaction_date'] = pd.to_datetime(df['transaction_date'], errors='coerce')
+df['quantity'] = pd.to_numeric(df['quantity'], errors='coerce').fillna(0).astype(int)
+df['unit_price'] = pd.to_numeric(df['unit_price'], errors='coerce').fillna(0.0)
+df['cost'] = pd.to_numeric(df['cost'], errors='coerce').fillna(0.0)
+df['discount_amount'] = pd.to_numeric(df.get('discount_amount', 0), errors='coerce').fillna(0.0)
+
+
+# Remove exact duplicates
+df = df.drop_duplicates(subset=['transaction_id'])
+
+
+# Fill missing product/region ids with 'UNKNOWN'
+df['product_id'] = df['product_id'].fillna('UNKNOWN')
+df['region_id'] = df['region_id'].fillna('UNKNOWN')
+
+
+# Compute derived fields
+df['revenue'] = df['unit_price'] * df['quantity'] - df['discount_amount']
+df['cost_total'] = df['cost'] * df['quantity']
+df['profit'] = df['revenue'] - df['cost_total']
+
+
+# Create date parts for easy aggregation
+df['date_key'] = df['transaction_date'].dt.strftime('%Y%m%d').astype('int')
+df['year'] = df['transaction_date'].dt.year
+df['month'] = df['transaction_date'].dt.month
+
+
+return df
+
+
+
+
+def main():
+path = Path(INPUT)
+df = pd.read_csv(path)
+df_clean = clean(df)
+
+
+df_clean.to_csv(OUT_CLEAN, index=False)
+
+
+# Aggregation: monthly sales by region
+agg = (df_clean.groupby(['year', 'month', 'region_id', 'region_name'])
+.agg(total_revenue=('revenue','sum'), total_profit=('profit','sum'), total_qty=('quantity','sum'))
+.reset_index())
+agg.to_csv(OUT_AGG_MONTH_REGION, index=False)
+
+
+print('Cleaned and aggregated files written.')
+
+
+if _name_ == '_main_':
+main()
