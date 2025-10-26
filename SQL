@@ -1,0 +1,44 @@
+1) SQL: schema + ETL + aggregation
+1.1 Create schema / dimension tables (T-SQL style)
+-- Create schema
+CREATE TABLE dim_date (
+date_key INT PRIMARY KEY, -- YYYYMMDD
+full_date DATE,
+year INT,
+quarter INT,
+month INT,
+month_name VARCHAR(20),
+day INT,
+weekday INT,
+is_weekend BIT
+);
+
+
+CREATE TABLE dim_product (
+product_id VARCHAR(100) PRIMARY KEY,
+product_name VARCHAR(255),
+category VARCHAR(100)
+);
+
+
+CREATE TABLE dim_region (
+region_id VARCHAR(100) PRIMARY KEY,
+region_name VARCHAR(255)
+);
+
+
+CREATE TABLE fact_sales (
+sales_id BIGINT IDENTITY(1,1) PRIMARY KEY,
+transaction_id VARCHAR(100),
+date_key INT,
+product_id VARCHAR(100),
+region_id VARCHAR(100),
+store_id VARCHAR(100),
+quantity INT,
+unit_price DECIMAL(18,2),
+revenue DECIMAL(18,2),
+cost DECIMAL(18,2),
+discount_amount DECIMAL(18,2),
+profit DECIMAL(18,2),
+sales_channel VARCHAR(100)
+);
