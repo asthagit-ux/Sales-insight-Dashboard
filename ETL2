@@ -1,0 +1,20 @@
+1.4 ETL: transform & load fact_sales
+INSERT INTO fact_sales(
+transaction_id, date_key, product_id, region_id, store_id,
+quantity, unit_price, revenue, cost, discount_amount, profit, sales_channel)
+SELECT
+rt.transaction_id,
+CONVERT(INT, FORMAT(rt.transaction_date,'yyyyMMdd')) AS date_key,
+rt.product_id,
+rt.region_id,
+rt.store_id,
+ISNULL(rt.quantity,0) AS quantity,
+ISNULL(rt.unit_price,0) AS unit_price,
+ISNULL(rt.unit_price,0) * ISNULL(rt.quantity,0) - ISNULL(rt.discount_amount,0) AS revenue,
+ISNULL(rt.cost,0) * ISNULL(rt.quantity,0) AS cost,
+ISNULL(rt.discount_amount,0) AS discount_amount,
+(ISNULL(rt.unit_price,0) * ISNULL(rt.quantity,0) - ISNULL(rt.discount_amount,0)) - (ISNULL(rt.cost,0) * ISNULL(rt.quantity,0)) AS profit,
+rt.sales_channel
+FROM raw_transactions rt
+LEFT JOIN fact_sales f ON f.transaction_id = rt.transaction_id
+WHERE f.transaction_id IS NULL; -- simple dedupe to avoid duplicates
