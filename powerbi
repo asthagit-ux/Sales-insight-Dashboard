@@ -1,0 +1,54 @@
+4) Power BI / DAX measures
+-- Basic KPIs
+Total Revenue = SUM(fact_sales[revenue])
+Total Cost = SUM(fact_sales[cost])
+Total Profit = SUM(fact_sales[profit])
+
+
+-- Margin %
+Profit Margin % = DIVIDE([Total Profit], [Total Revenue], 0)
+
+
+-- Year over Year Sales Growth (using calendar table 'dim_date')
+Revenue LY = CALCULATE([Total Revenue], SAMEPERIODLASTYEAR('dim_date'[full_date]))
+Revenue YoY % = DIVIDE([Total Revenue] - [Revenue LY], [Revenue LY], 0)
+
+
+-- Running total (month-to-date by date)
+Running Revenue =
+CALCULATE(
+[Total Revenue],
+FILTER(
+ALL('dim_date'),
+'dim_date'[full_date] <= MAX('dim_date'[full_date])
+)
+)
+
+
+-- Top N products dynamic
+Top N Products Revenue =
+VAR TopN = SELECTEDVALUE(Parameters[TopN], 10)
+RETURN
+CALCULATE(
+[Total Revenue],
+TOPN(TopN, VALUES(dim_product[product_name]), [Total Revenue])
+)
+
+
+-- Sales by Region (measure)
+Sales by Region = [Total Revenue]
+
+
+-- Average order value
+Avg Order Value = DIVIDE([Total Revenue], DISTINCTCOUNT(fact_sales[transaction_id]), 0)
+
+
+-- Customer Lifetime / Repeat Rate (example)
+Repeat Customers =
+CALCULATE(
+DISTINCTCOUNT(fact_sales[customer_id]),
+FILTER(
+VALUES(fact_sales[customer_id]),
+CALCULATE(COUNTROWS(fact_sales), ALL(fact_sales)) > 1
+)
+)
